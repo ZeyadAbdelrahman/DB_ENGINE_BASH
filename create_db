@@ -1,0 +1,39 @@
+#!/usr/bin/bash
+
+script_dir=$(dirname "$0")
+file_dir="$script_dir/../data"
+prev_dir=$(pwd)
+cd "$file_dir" 
+
+name=false
+while [ "$name" = false ]; do
+    echo "Enter DB Name: "
+    read dbname
+
+    if [[ -z "$dbname" ]]; then
+        echo "Name cannot be empty. Please enter a valid DB name."
+    elif [[ "$dbname" =~ ^[[:space:]]+$ ]]; then
+        echo "Invalid name. Name cannot contain only spaces."
+    elif [[ "$dbname" =~ [^a-zA-Z0-9_] || "$dbname" =~ [[:space:]] ]]; then
+        echo "Invalid name. Name cannot contain special characters, spaces, or start with a number."
+    elif [ -d "$dbname" ]; then
+        echo "DB '$dbname' already exists. Please enter a different name."
+    elif (( ${#dbname} > 64 )); then
+        echo "Name exceeds maximum length of 64 characters."
+    else
+        if [[ "$dbname" =~ ^[0-9] ]]; then
+            echo "Invalid name. Name cannot start with a number."
+        else
+            name=true
+        fi
+    fi
+
+    if [ "$name" = false ]; then
+        echo "Please enter a valid DB name."
+    fi
+done
+
+mkdir "$dbname"
+cd "$prev_dir" 
+echo "Directory '$dbname' is created successfully. To edit your DB '$dbname', select 'Connect DB'."
+

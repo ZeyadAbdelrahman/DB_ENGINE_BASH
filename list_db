@@ -1,0 +1,47 @@
+#!/usr/bin/bash
+
+script_dir=$(dirname "$0")
+file_dir="$script_dir/../data"
+
+list_databases() {
+    cd "$file_dir" 
+    counter=1
+    declare -a db_array
+
+    echo "Available Databases:"
+    for db in */; do
+        db_name=$(basename "$db")
+        db_array+=("$db_name")
+        echo "$counter) $db_name"
+        ((counter++))
+    done
+
+    printf "%s\n" "${db_array[@]}" > "$script_dir/.db_array"
+}
+
+show_database_details() {
+    mapfile -t db_array < "$script_dir/.db_array"
+    db_count=${#db_array[@]}
+
+    read -rp "Enter the number of the database to view details: " db_number
+
+    if [[ "$db_number" =~ ^[0-9]+$ ]]; then
+        if [ "$db_number" -gt 0 ] && [ "$db_number" -le "$db_count" ]; then
+            db_to_show=${db_array[$db_number - 1]}
+            if [ -d "$file_dir/$db_to_show" ]; then
+                echo "Details of Database '$db_to_show':"
+                ls  "$file_dir/$db_to_show"
+            else
+                echo "Database '$db_to_show' does not exist."
+            fi
+        else
+            echo "Invalid input. Please enter a valid database number (1-$db_count)."
+        fi
+    else
+        echo "Invalid input. Please enter a valid database number."
+    fi
+}
+
+list_databases
+show_database_details
+

@@ -1,0 +1,42 @@
+#!/usr/bin/bash
+
+echo "The existing tables are: "
+tables=($(ls))  # Assuming you're already inside the connected database directory
+
+for ((i=0; i<${#tables[@]}; i++)); do
+    echo "$((i+1))) ${tables[$i]}"
+done
+
+valid_choice=false
+while [ "$valid_choice" = false ]; do
+    echo "Enter the number of the table you want to delete from: "
+    read table_num
+
+    if ! [[ "$table_num" =~ ^[1-9][0-9]*$ ]] || ((table_num < 1 || table_num > ${#tables[@]})); then
+        echo "Invalid choice. Please enter a valid number."
+    else
+        valid_choice=true
+        table_index=$((table_num - 1))
+        table_to_delete="${tables[$table_index]}"
+
+        echo "Deleting from table: $table_to_delete"
+
+        echo "Current contents of $table_to_delete:"
+        cat "$table_to_delete"
+
+        valid_row=false
+        while [ "$valid_row" = false ]; do
+            echo "Enter the row number you want to delete: "
+            read row_num
+
+            if ! [[ "$row_num" =~ ^[1-9][0-9]*$ ]] || ((row_num <= 2)); then
+                echo "Invalid row number. Please enter a valid number (You cannot delete the first two rows as they are the metadata!!!."
+            else
+                sed -i "${row_num}d" "$table_to_delete"  # Delete the specified row
+                echo "Row $row_num deleted from $table_to_delete."
+                valid_row=true
+            fi
+        done
+    fi
+done
+

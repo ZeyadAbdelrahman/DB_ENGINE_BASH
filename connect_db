@@ -1,0 +1,66 @@
+#!/usr/bin/bash
+
+PS3=">>> "
+script_dir=$(dirname "$0")
+file_dir="$script_dir/../data"
+prev_dir=$(pwd)
+cd "$file_dir" 
+
+array=($(ls -F | grep / | tr '/' ' '))
+
+select choice in "${array[@]}"
+do
+    if [ "$REPLY" -gt "${#array[*]}" ]; then
+        echo "$REPLY not in the list"
+        continue
+    else
+        cd "$file_dir/${array[$REPLY-1]}"
+        echo "Connected to ${array[$REPLY-1]}"
+        echo "Current directory: $(pwd)"
+        break
+    fi
+done
+
+select choice in Create_Table List_Table Drop_Table Insert_into_Table Select_from_Table Delete_from_Table Update_Table Exit
+
+do
+	case $choice in
+		Create_Table ) 
+			echo "Creating table"
+			source ../../files/create_table
+			;;
+		List_Table )
+			echo "Listing Tables"
+			source ../../files/list_table
+			;;
+		Drop_Table )
+			echo "Dropping Tables"
+			source ../../files/drop_table
+			;;
+
+		Insert_into_Table )
+			echo "Inserting into Tables"
+			source ../../files/insert_in_table
+			;;
+		Select_from_Table )
+			echo "Selecting from Tables"
+			source ../../files/select_from_table
+			;;
+		Delete_from_Table )
+			echo "Deleting from Tables"
+			source ../../files/delete_from_table
+			;;
+		Update_Table )
+			echo "Updating Tables Tables"
+			source ../../files/update_table
+			;;
+		Exit )
+			echo "Exiting"
+			break
+			;;
+		* )
+        		echo "Invalid option. Please select again."
+	esac
+done
+cd "$prev_dir"
+echo "Returned to the previous directory: $(pwd)"

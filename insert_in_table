@@ -1,0 +1,61 @@
+#!/usr/bin/bash
+
+echo "The existing tables are: "
+tables=($(ls))
+
+for ((i=0; i<${#tables[@]}; i++)); do
+    echo "$((i+1))) ${tables[$i]}"
+done
+
+valid_choice=false
+while [ "$valid_choice" = false ]; do
+    echo "Enter the number of the table you want to add data to: "
+    read table_num
+
+    if ! [[ "$table_num" =~ ^[1-9][0-9]*$ ]] || ((table_num < 1 || table_num > ${#tables[@]})); then
+        echo "Invalid choice. Please enter a valid number."
+    else
+        valid_choice=true
+        table_index=$((table_num - 1))
+        table_to_insert="${tables[$table_index]}"
+
+        echo "Adding data to table: $table_to_insert"
+        table_path="$table_to_insert"
+    fi
+done
+
+# Get column structure - first two rows for column names and data types
+IFS=$'\n' read -r -a columns_and_types < "$table_path"
+
+declare -a column_names=($(echo "${columns_and_types[0]}" | tr ':' ' '))
+declare -a column_types=($(echo "${columns_and_types[1]}" | tr ':' ' '))
+
+row=""
+
+for ((i=0; i<${#column_names[@]}; i++)); do
+    valid_entry=false
+    while [ "$valid_entry" = false ]; do
+        echo "Enter ${column_names[$i]} (${column_types[$i]}): "
+        read entry
+
+        # Validate data type
+        if [[ "${column_types[$i]}" == "integer" ]]; then
+            if ! [[ "$entry" =~ ^[0-9]+$ ]]; then
+                echo "Invalid entry. Expected integer value."
+            else
+                valid_entry=true
+            fi
+        elif [[ "${column_types[$i]}" == "string" ]]; then
+            valid_entry=true  # Accept any string value
+        else
+            echo "Unknown column type: ${column_types[$i]}"
+            break
+        fi
+    done
+
+    row+="$entry:"
+done
+
+echo "$row" >> "$table_path"
+echo "Data inserted successfully into $table_to_insert."
+
