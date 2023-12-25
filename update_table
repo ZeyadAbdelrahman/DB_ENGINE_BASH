@@ -1,1 +1,65 @@
-#!/usr/bin/bash
+#!/bin/bash
+
+echo "Available tables:"
+ls
+
+# Prompt user to select a table
+tables=($(ls))
+select table_name in "${tables[@]}"; do
+    if [ -n "$table_name" ]; then
+        break
+    else
+        echo "Invalid choice. Please select a valid table."
+    fi
+done
+
+# Check if the file exists
+if [ ! -f "$table_name" ]; then
+    echo "Table '$table_name' not found."
+    exit 1
+fi
+
+# Display table content (excluding first two rows)
+awk 'NR' "$table_name"
+
+# Get row number to update
+read -p "Enter the row number to update (start from 3): " row_number
+
+# Get column names and types
+column_names=($(awk 'NR==1 {split($0, arr, ":"); for (i in arr) print arr[i]}' "$table_name"))
+column_types=($(awk 'NR==2 {split($0, arr, ":"); for (i in arr) print arr[i]}' "$table_name"))
+
+# Validate and update the specified row with new values
+if [ "$row_number" -gt 2 ] && [ "$row_number" -le "$(wc -l < "$table_name")" ]; then
+    new_values=""
+    for ((i=0; i<${#column_names[@]}; i++)); do
+        valid_entry=false
+        while [ "$valid_entry" = false ]; do
+            echo "Enter value for ${column_names[$i]} (${column_types[$i]}): "
+            read value
+
+            if [[ "${column_types[$i]}" == "integer" ]]; then
+                if ! [[ "$value" =~ ^[0-9]+$ ]]; then
+                    echo "Invalid entry. Expected integer value."
+                else
+                    valid_entry=true
+                fi
+            elif [[ "${column_types[$i]}" == "string" ]]; then
+                valid_entry=true
+            else
+                echo "Invalid column type: ${column_types[$i]}"
+                break
+            fi
+        done
+
+        new_values+="$value:"
+    done
+
+    # Update the specified row with new values
+    awk -v row_num="$row_number" -v new_vals="$new_values" -F: 'NR==row_num {$0 = new_vals} 1' "$table_name" > tmpfile && mv tmpfile "$table_name"
+
+    echo "Row $row_number updated successfully!"
+else
+    echo "Invalid row number. Please enter a valid row number."
+fi
+
