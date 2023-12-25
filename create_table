@@ -1,0 +1,97 @@
+#!/usr/bin/bash
+
+echo "The existing tables are: "
+ls 
+name=false
+while [ "$name" = false ]; do
+    echo "Enter Table Name: "
+    read tablename
+
+    if [[ -z "$tablename" ]]; then
+        echo "Name cannot be empty. Please enter a valid Table name."
+    elif [[ "$tablename" =~ ^[[:space:]]+$ ]]; then
+        echo "Invalid name. Name cannot contain only spaces."
+    elif [[ "$tablename" =~ [^a-zA-Z0-9_] || "$tablename" =~ [[:space:]] ]]; then
+        echo "Invalid name. Name cannot contain special characters, spaces, or start with a number."
+    elif [ -e "$tablename" ]; then
+        echo "Table '$tablename' already exists. Please enter a different name."
+    elif (( ${#tablename} > 32 )); then
+        echo "Name exceeds maximum length of 32 characters."
+    else
+        if [[ "$tablename" =~ ^[0-9] ]]; then
+            echo "Invalid name. Name cannot start with a number."
+        else
+            name=true
+        fi
+    fi
+
+    if [ "$name" = false ]; then
+        echo "Please enter a valid Table name."
+    fi
+done
+
+num_columns=false
+while [ "$num_columns" = false ]; do
+    echo "Enter the number of columns for '$tablename': "
+    read columns
+
+    if ! [[ "$columns" =~ ^[1-9][0-9]*$ ]]; then
+        echo "Please enter a valid number greater than 0."
+    else
+        num_columns=true
+    fi
+done
+
+touch "$tablename"
+echo "Table '$tablename' created with $columns columns."
+echo "!!!!!ENTER YOUR METADATA FOR $tablename!!!!!"
+declare -a column_names
+declare -a column_types
+declare -a columns_metadata
+
+for ((i=1; i<=$columns; i++))
+do
+    valid_name=false
+    while [ "$valid_name" = false ]; do
+        echo "Enter name for column $i: "
+        read colname
+        if [[ " ${column_names[*]} " =~ " $colname " || -z "$colname" || ! "$colname" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ || ${#colname} -gt 32 ]]; then
+            echo "Invalid column name or duplicate. Please enter a valid and unique name."
+        else
+            valid_name=true
+            column_names+=("$colname")
+        fi
+    done
+    echo "Column $i name: $colname"
+    
+    valid_type=false
+    while [ "$valid_type" = false ]; do
+        echo "Select datatype for column $colname (string/integer): "
+        select datatype in string integer; do
+            case $datatype in
+                string)
+                    echo "Selected: string"
+                    column_types+=("string")
+                    valid_type=true
+                    break
+                    ;;
+                integer)
+                    echo "Selected: integer"
+                    column_types+=("integer")
+                    valid_type=true
+                    break
+                    ;;
+                *)
+                    echo "Invalid choice. Please select '1' for string or '2' for integer."
+                    ;;
+            esac
+        done
+    done
+done
+echo "${column_names[*]}" | tr ' ' ':' > "$tablename"
+echo "${column_types[*]}" | tr ' ' ':' >> "$tablename"
+echo "Column names and data types written to '$tablename'."
+
+
+
+

@@ -1,0 +1,27 @@
+#!/usr/bin/bash
+
+echo "The existing tables are: "
+tables=($(ls))
+
+for ((i=0; i<${#tables[@]}; i++)); do
+    echo "$((i+1))) ${tables[$i]}"
+done
+
+valid_choice=false
+while [ "$valid_choice" = false ]; do
+    echo "Enter the number of the table you want to delete: "
+    read table_num
+
+    if ! [[ "$table_num" =~ ^[1-9][0-9]*$ ]] || ((table_num < 1 || table_num > ${#tables[@]})); then
+        echo "Invalid choice. Please enter a valid number."
+    else
+        valid_choice=true
+        table_index=$((table_num - 1))
+        table_to_delete="${tables[$table_index]}"
+
+        echo "Deleting table: $table_to_delete"
+        rm "$table_to_delete" 
+        echo "Table '$table_to_delete' deleted."
+    fi
+done
+
